@@ -1,6 +1,6 @@
 defmodule PresenceChat.RoomChannel do
   use PresenceChat.Web, :channel
-  alias Phoenix.Presence.Tracker
+  import PresenceChat.Presence, only: [track_presence: 3, list: 1]
 
   def join("rooms:lobby", _, socket) do
     send self, :after_join
@@ -11,9 +11,9 @@ defmodule PresenceChat.RoomChannel do
     user_id = socket.assigns.user_id
     online_at = inspect(:os.timestamp())
 
-    Tracker.track(socket, user_id, %{online_at: online_at})
+    :ok = track_presence(socket, user_id, %{online_at: online_at})
 
-    push socket, "users_list", %{users: Tracker.list_by(socket)}
+    push socket, "presences", list(socket.topic)
     {:noreply, socket}
   end
 end

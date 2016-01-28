@@ -14,6 +14,11 @@ config :presence_chat, PresenceChat.Endpoint,
   pubsub: [name: PresenceChat.PubSub,
            adapter: Phoenix.PubSub.PG2]
 
+config :presence_chat, PresenceChat.Presence,
+  pubsub_server: PresenceChat.PubSub,
+  heartbeat_interval: 500
+
+
 # Configures Elixir's Logger
 config :logger, :console,
   format: "$time $metadata[$level] $message\n",

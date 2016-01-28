@@ -16,41 +16,64 @@ import socket from "./socket"
 import React from "react"
 import ReactDOM from "react-dom"
 
-let room = socket.channel("rooms:lobby", {})
 
-let UserStore = {
-  users: {},
+class Presence {
+
+  constructor(){
+    this.users = {}
+  }
 
   populate(users){
     this.users = users
-  },
+  }
 
-  addUser({key, meta, ref}){
-    if(!this.users[key]){ this.users[key] = [] }
-    this.users[key].push({meta, ref})
-  },
-
-  deleteUser({key, meta, ref}){ if(!this.users[key]){ return }
-    let presences = this.users[key].filter(p => p.ref !== ref)
-    if(presences.length === 0){
-      delete this.users[key]
-    } else {
-      this.users[key] = presences
-    }
-  },
-
-  list(keyName = "id"){
-    return this.mapKV(this.users, (key, presences) => {
-      let pres = presences[0].meta
-      pres.count = presences.length
-      pres[keyName] = key
-      return pres
+  // {123: {metas: [], post: {}jj}}
+  add(presences){
+    this.mapKV(presences, (key, presence) => {
+      let currentPresence = this.users[key]
+      this.users[key] = presence
+      if(currentPresence){
+        this.users[key].metas = currentPresence.metas.concat(presence.metas)
+      }
     })
-  },
+  }
+
+  remove(presences){
+    this.mapKV(presences, (key, presence) => {
+      if(!this.users[key]){ return }
+      let refsToRemove = presence.metas.map(m => m.phx_ref)
+      let metas = this.users[key].metas.filter(p => refsToRemove.indexOf(p.phx_ref) < 0)
+
+      if(metas.length === 0){
+        delete this.users[key]
+      } else {
+        this.users[key].metas = metas
+      }
+    })
+  }
+
+  list(chooser){
+    if(!chooser){ chooser = function(key, pres){ return pres } }
+
+    return this.mapKV(this.users, (key, presence) => {
+      return chooser(key, presence)
+    })
+  }
+
+  // private
 
   mapKV(obj, func){
     return Object.getOwnPropertyNames(obj).map(key => func(key, obj[key]))
   }
+}
+
+let room = socket.channel("rooms:lobby", {})
+room.presence = new Presence()
+
+let listBy = (id, {metas: [first, ...rest]}) => {
+  first.count = rest.length + 1
+  first.id = id
+  return first
 }
 
 let Chat = React.createClass({
@@ -59,20 +82,20 @@ let Chat = React.createClass({
   },
 
   componentDidMount(){
-    room.on("users_list", ({users}) => {
-      console.log("users_list", users)
-      UserStore.populate(users)
-      this.setState({users: UserStore.list()})
+    room.on("presences", users => {
+      console.log("presences", users)
+      room.presence.populate(users)
+      this.setState({users: room.presence.list(listBy)})
     })
     room.on("presence_join", user => {
-      console.log("join", user)
-      UserStore.addUser(user)
-      this.setState({users: UserStore.list()})
+      console.log("user has joined", user)
+      room.presence.add(user)
+      this.setState({users: room.presence.list(listBy)})
     })
     room.on("presence_leave", user => {
-      console.log("leave", user)
-      UserStore.deleteUser(user)
-      this.setState({users: UserStore.list()})
+      console.log("user has left", user)
+      room.presence.remove(user)
+      this.setState({users: room.presence.list(listBy)})
     })
     room.join()
       .receive("ok", resp => { console.log("Joined successfully", resp) })

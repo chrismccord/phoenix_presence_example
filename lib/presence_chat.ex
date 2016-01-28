@@ -11,12 +11,7 @@ defmodule PresenceChat do
       supervisor(PresenceChat.Endpoint, []),
       # Start the Ecto repository
       supervisor(PresenceChat.Repo, []),
-      # Here you could define other workers and supervisors as children
-      # worker(PresenceChat.Worker, [arg1, arg2, arg3]),
-      # supervisor(Phoenix.Presence.Server, [[channel: PresenceChat.RoomChannel,
-      #                                       pubsub_server: PresenceChat.PubSub]]),
-      worker(Phoenix.Presence.Tracker, [[channel: PresenceChat.RoomChannel,
-                                         pubsub_server: PresenceChat.PubSub]]),
+      supervisor(PresenceChat.Presence, []),
 
     ]
 

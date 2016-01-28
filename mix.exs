@@ -19,7 +19,7 @@ defmodule PresenceChat.Mixfile do
   def application do
     [mod: {PresenceChat, []},
      applications: [:phoenix, :phoenix_html, :cowboy, :logger, :gettext,
-                    :phoenix_ecto, :postgrex, :phoenix_presence]]
+                    :phoenix_ecto, :postgrex, :phoenix_pubsub]]
   end
 
   # Specifies which paths to compile per environment.
@@ -30,8 +30,7 @@ defmodule PresenceChat.Mixfile do
   #
   # Type `mix help deps` for examples and options.
   defp deps do
-    [{:phoenix, path: "~/Workspace/projects/phoenix", override: true},
-     {:phoenix_presence, path: "~/Workspace/projects/phoenix_presence"},
+    [{:phoenix, github: "phoenixframework/phoenix", override: true},
      {:phoenix_ecto, "~> 2.0"},
      {:postgrex, ">= 0.0.0"},
      {:phoenix_html, "~> 2.3"},

@@ -1,5 +1,8 @@
 use Mix.Config
 
+config :kernel, sync_nodes_optional: [:"n1@127.0.0.1", "n2@127.0.0.1"],
+  sync_nodes_timeout: 30000
+
 # For development, we disable any cache and enable
 # debugging and code reloading.
 #
