@@ -3,6 +3,7 @@ defmodule PresenceChat.Presence do
 
   def fetch(_topic, entries) do
     for {key, %{metas: metas}} <- entries, into: %{} do
+
       {key, %{metas: metas, user: %{name: "chris"}}}
     end
   end

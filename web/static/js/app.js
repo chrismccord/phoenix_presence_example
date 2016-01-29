@@ -87,14 +87,10 @@ let Chat = React.createClass({
       room.presence.populate(users)
       this.setState({users: room.presence.list(listBy)})
     })
-    room.on("presence_join", user => {
-      console.log("user has joined", user)
-      room.presence.add(user)
-      this.setState({users: room.presence.list(listBy)})
-    })
-    room.on("presence_leave", user => {
-      console.log("user has left", user)
-      room.presence.remove(user)
+    room.on("presence_diff", diff => {
+      console.log("users diff", diff)
+      room.presence.add(diff.joins)
+      room.presence.remove(diff.leaves)
       this.setState({users: room.presence.list(listBy)})
     })
     room.join()
