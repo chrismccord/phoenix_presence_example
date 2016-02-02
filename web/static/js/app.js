@@ -13,67 +13,33 @@
 // to also remove its path from "config.paths.watched".
 import "phoenix_html"
 import socket from "./socket"
+import {Presence} from "phoenix"
 import React from "react"
 import ReactDOM from "react-dom"
 
 
-class Presence {
-
-  constructor(){
-    this.users = {}
-  }
-
-  populate(users){
-    this.users = users
-  }
-
-  // {123: {metas: [], post: {}jj}}
-  add(presences){
-    this.mapKV(presences, (key, presence) => {
-      let currentPresence = this.users[key]
-      this.users[key] = presence
-      if(currentPresence){
-        this.users[key].metas = currentPresence.metas.concat(presence.metas)
-      }
-    })
-  }
-
-  remove(presences){
-    this.mapKV(presences, (key, presence) => {
-      if(!this.users[key]){ return }
-      let refsToRemove = presence.metas.map(m => m.phx_ref)
-      let metas = this.users[key].metas.filter(p => refsToRemove.indexOf(p.phx_ref) < 0)
-
-      if(metas.length === 0){
-        delete this.users[key]
-      } else {
-        this.users[key].metas = metas
-      }
-    })
-  }
-
-  list(chooser){
-    if(!chooser){ chooser = function(key, pres){ return pres } }
-
-    return this.mapKV(this.users, (key, presence) => {
-      return chooser(key, presence)
-    })
-  }
-
-  // private
-
-  mapKV(obj, func){
-    return Object.getOwnPropertyNames(obj).map(key => func(key, obj[key]))
-  }
-}
-
 let room = socket.channel("rooms:lobby", {})
-room.presence = new Presence()
+room.presences = {}
 
 let listBy = (id, {metas: [first, ...rest]}) => {
   first.count = rest.length + 1
   first.id = id
   return first
+}
+
+let onJoin = (id, current, newPres) => {
+  if(!current){
+    console.log("user has entered for the first time", newPres)
+  } else {
+    console.log("user additional presence", newPres)
+  }
+}
+let onLeave = (id, current, leftPres) => {
+  if(current.metas.length === 0){
+    console.log("user has left from all devices", leftPres)
+  } else {
+    console.log("user left from a device", leftPres)
+  }
 }
 
 let Chat = React.createClass({
@@ -82,16 +48,15 @@ let Chat = React.createClass({
   },
 
   componentDidMount(){
-    room.on("presences", users => {
-      console.log("presences", users)
-      room.presence.populate(users)
-      this.setState({users: room.presence.list(listBy)})
+    room.on("presences", state => {
+      console.log("presences", state)
+      Presence.syncState(room.presences, state, onJoin, onLeave)
+      this.setState({users: Presence.list(room.presences, listBy)})
     })
     room.on("presence_diff", diff => {
       console.log("users diff", diff)
-      room.presence.add(diff.joins)
-      room.presence.remove(diff.leaves)
-      this.setState({users: room.presence.list(listBy)})
+      Presence.syncDiff(room.presences, diff, onJoin, onLeave)
+      this.setState({users: Presence.list(room.presences, listBy)})
     })
     room.join()
       .receive("ok", resp => { console.log("Joined successfully", resp) })

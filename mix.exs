@@ -31,6 +31,7 @@ defmodule PresenceChat.Mixfile do
   # Type `mix help deps` for examples and options.
   defp deps do
     [{:phoenix, github: "phoenixframework/phoenix", override: true},
+     {:phoenix_pubsub, path: "~/Workspace/projects/phoenix_pubsub", override: true},
      {:phoenix_ecto, "~> 2.0"},
      {:postgrex, ">= 0.0.0"},
      {:phoenix_html, "~> 2.3"},
