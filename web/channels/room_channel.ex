@@ -19,7 +19,7 @@ defmodule PresenceChat.RoomChannel do
     user_id = socket.assigns.user_id
     online_at = inspect(:os.timestamp())
 
-    {:ok, _} = Presence.track(socket, user_id, %{online_at: online_at})
+    Presence.track(socket, user_id, %{online_at: online_at})
 
     push socket, "presences", Presence.list(socket)
     Process.send_after(self, :update_meta, 5000)
